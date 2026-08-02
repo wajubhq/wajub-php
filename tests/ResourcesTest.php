@@ -26,6 +26,9 @@ final class ResourcesTest extends TestCase
             'currency' => 'XAF',
         ]);
 
+        $this->assertSame('pay_123', $payment->id);
+        $this->assertSame('tok_abc', $payment->authorization_token);
+        $this->assertSame('https://checkout.test/pay/pay_123', $payment->authorization_url);
         $this->assertSame('pay_123', $payment['id']);
         $this->assertSame('tok_abc', $payment['authorization_token']);
         $this->assertSame('https://checkout.test/pay/pay_123', $payment['authorization_url']);
@@ -43,6 +46,7 @@ final class ResourcesTest extends TestCase
 
         $payment = $payments->initialize(['amount' => 1000, 'currency' => 'XAF']);
 
+        $this->assertSame('pay_456', $payment->id);
         $this->assertSame('pay_456', $payment['id']);
     }
 
@@ -57,6 +61,7 @@ final class ResourcesTest extends TestCase
 
         $payment = $payments->retrieve('pay_789');
 
+        $this->assertSame('succeeded', $payment->status);
         $this->assertSame('succeeded', $payment['status']);
     }
 
