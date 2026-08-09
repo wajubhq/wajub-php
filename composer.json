@@ -1,6 +1,6 @@
 {
     "name": "wajub/wajub-php",
-    "description": "Official Wajub PHP SDK — server-side payments, webhooks, and merchant API",
+    "description": "Official Wajub PHP SDK — server-side payments, and merchant API",
     "type": "library",
     "version": "1.1.0",
     "license": "MIT",
