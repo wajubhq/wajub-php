@@ -2,7 +2,7 @@
     "name": "wajub/wajub-php",
     "description": "Official Wajub PHP SDK — server-side payments, and merchant API",
     "type": "library",
-    "version": "1.1.0",
+    "version": "1.1.1",
     "license": "MIT",
     "keywords": ["wajub", "payments", "webhooks", "mobile-money", "africa", "checkout"],
     "homepage": "https://docs.wajub.com/libraries/sdks/php",
@@ -13,8 +13,8 @@
         }
     ],
     "support": {
-        "issues": "https://github.com/wajub/wajub-php/issues",
-        "source": "https://github.com/wajub/wajub-php"
+        "issues": "https://github.com/wajubhq/wajub-php/issues",
+        "source": "https://github.com/wajubhq/wajub-php"
     },
     "require": {
         "php": "^8.2",

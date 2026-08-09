@@ -6,7 +6,7 @@ namespace Wajub;
 
 final class Version
 {
-    public const VERSION = '1.1.0';
+    public const VERSION = '1.1.1';
 
     public const API_URL = 'https://api.wajub.com';
 }
