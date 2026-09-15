@@ -4,63 +4,61 @@ declare(strict_types=1);
 
 namespace Wajub\Resources;
 
+use Generator;
 use Iterator;
+use RuntimeException;
 
 /**
+ * One page of a list endpoint. Iterating the object walks the current page;
+ * `autoPagingIterator()` keeps fetching until the last one.
+ *
  * @implements Iterator<int, array<string, mixed>>
  */
 final class PagedResult implements Iterator
 {
-    /** @var array<int, array<string, mixed>> */
-    public readonly array $data;
-
-    /** @var array<string, mixed>|null */
-    public readonly ?array $meta;
-
-    public readonly bool $hasMore;
-
-    /** @var callable(int): PagedResult */
-    private $fetchPage;
+    /** @var callable(): PagedResult */
+    private $fetchNext;
 
     private int $position = 0;
 
     /**
      * @param  array<int, array<string, mixed>>  $data
      * @param  array<string, mixed>|null  $meta
-     * @param  callable(int): PagedResult  $fetchPage
+     * @param  callable(): PagedResult  $fetchNext
      */
-    public function __construct(array $data, ?array $meta, bool $hasMore, callable $fetchPage)
-    {
-        $this->data = $data;
-        $this->meta = $meta;
-        $this->hasMore = $hasMore;
-        $this->fetchPage = $fetchPage;
+    public function __construct(
+        public readonly array $data,
+        public readonly ?array $meta,
+        public readonly bool $hasMore,
+        callable $fetchNext,
+    ) {
+        $this->fetchNext = $fetchNext;
     }
 
     public function getNextPage(): self
     {
         if (! $this->hasMore) {
-            throw new \RuntimeException('No more pages available');
+            throw new RuntimeException('No more pages available');
         }
 
-        $next = ((int) ($this->meta['current_page'] ?? 1)) + 1;
-
-        return ($this->fetchPage)($next);
+        return ($this->fetchNext)();
     }
 
     /**
-     * @return \Generator<int, array<string, mixed>>
+     * @return Generator<int, array<string, mixed>>
      */
-    public function autoPagingIterator(): \Generator
+    public function autoPagingIterator(): Generator
     {
         $page = $this;
         while (true) {
             foreach ($page->data as $item) {
                 yield $item;
             }
+
             if (! $page->hasMore) {
-                break;
+                return;
             }
+
             $page = $page->getNextPage();
         }
     }
@@ -77,7 +75,7 @@ final class PagedResult implements Iterator
 
     public function next(): void
     {
-        ++$this->position;
+        $this->position++;
     }
 
     public function rewind(): void

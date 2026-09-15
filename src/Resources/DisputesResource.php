@@ -36,20 +36,30 @@ final class DisputesResource extends BaseClient
         );
     }
 
-    /** @return array<string, mixed> */
-    public function accept(string $id, ?RequestOptions $options = null): array
+    /**
+     * `POST /disputes/{uid}/accept`. Accepts `['merchant_response' => '...']`.
+     *
+     * @param  array<string, mixed>|null  $params
+     * @return array<string, mixed>
+     */
+    public function accept(string $id, ?array $params = null, ?RequestOptions $options = null): array
     {
         return HttpUtils::pickResource(
-            $this->post('/disputes/'.rawurlencode($id).'/accept', null, $options),
+            $this->post('/disputes/'.rawurlencode($id).'/accept', $params, $options),
             'dispute',
         );
     }
 
-    /** @return array<string, mixed> */
-    public function close(string $id, ?RequestOptions $options = null): array
+    /**
+     * `POST /disputes/{uid}/close`. Accepts `['merchant_response' => '...']`.
+     *
+     * @param  array<string, mixed>|null  $params
+     * @return array<string, mixed>
+     */
+    public function close(string $id, ?array $params = null, ?RequestOptions $options = null): array
     {
         return HttpUtils::pickResource(
-            $this->post('/disputes/'.rawurlencode($id).'/close', null, $options),
+            $this->post('/disputes/'.rawurlencode($id).'/close', $params, $options),
             'dispute',
         );
     }

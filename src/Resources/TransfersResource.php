@@ -6,7 +6,7 @@ namespace Wajub\Resources;
 
 use GuzzleHttp\Client;
 
-final class TransfersResource extends CrudResource
+final class TransfersResource extends Resource
 {
     public function __construct(string $apiKey, string $baseUrl, ?string $prefix = 'wajub', ?Client $http = null, ?int $maxNetworkRetries = null)
     {
