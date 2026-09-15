@@ -3,9 +3,11 @@
          xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
          bootstrap="vendor/autoload.php"
          colors="true"
-         cacheDirectory=".phpunit.cache">
+         cacheDirectory=".phpunit.cache"
+         failOnRisky="true"
+         failOnWarning="true">
     <testsuites>
-        <testsuite name="Wajub PHP SDK">
+        <testsuite name="Wajub Test Suite">
             <directory>tests</directory>
         </testsuite>
     </testsuites>

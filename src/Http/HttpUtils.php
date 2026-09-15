@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Wajub\Http;
 
-use Wajub\Exception\ApiConnectionException;
 use Wajub\Exception\AuthenticationException;
 use Wajub\Exception\InvalidRequestException;
 use Wajub\Exception\NotFoundException;
@@ -18,8 +17,9 @@ final class HttpUtils
     public static function normalizeApiKey(string $raw): string
     {
         $key = trim($raw);
+
         if (preg_match('/^bearer\s+/i', $key)) {
-            $key = trim((string) preg_replace('/^bearer\s+/i', '', $key));
+            return trim((string) preg_replace('/^bearer\s+/i', '', $key));
         }
 
         return $key;
@@ -37,7 +37,6 @@ final class HttpUtils
 
     /**
      * @param  array<string, mixed>  $body
-     * @param  string[]  $keys
      * @return array<string, mixed>
      */
     public static function pickResource(array $body, string ...$keys): array
@@ -53,7 +52,6 @@ final class HttpUtils
 
     /**
      * @param  array<string, mixed>  $body
-     * @param  string[]  $keys
      * @return array{data: array<int, array<string, mixed>>, meta: array<string, mixed>|null}
      */
     public static function pickList(array $body, string ...$keys): array
@@ -87,6 +85,7 @@ final class HttpUtils
             : (is_string($body['code'] ?? null) ? $body['code'] : "http_{$status}");
 
         $errors = null;
+
         if (isset($body['errors']) && is_array($body['errors'])) {
             $errors = [];
             foreach ($body['errors'] as $field => $value) {

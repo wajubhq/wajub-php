@@ -26,7 +26,7 @@ use Wajub\Resources\TransfersResource;
 use Wajub\Resources\WebhookEndpointsResource;
 
 /**
- * Wajub server SDK — Stripe-like entry point for PHP 8.2+.
+ * Wajub server SDK — Stripe-like entry point for PHP 8.4+.
  *
  * ```php
  * $wajub = new Wajub(['api_key' => env('WAJUB_API_KEY')]);
@@ -38,26 +38,26 @@ use Wajub\Resources\WebhookEndpointsResource;
  * ]);
  * ```
  */
-final class Wajub
+final readonly class Wajub
 {
-    public readonly GlobalResource $global;
-    public readonly PaymentsResource $payments;
-    public readonly CustomersResource $customers;
-    public readonly RefundsResource $refunds;
-    public readonly TransfersResource $transfers;
-    public readonly BeneficiariesResource $beneficiaries;
-    public readonly LinksResource $links;
-    public readonly BalanceResource $balance;
-    public readonly EventsResource $events;
-    public readonly AccountsResource $accounts;
-    public readonly WebhookEndpointsResource $webhookEndpoints;
-    public readonly InvoicesResource $invoices;
-    public readonly DisputesResource $disputes;
-    public readonly IdentityResource $identity;
-    public readonly TaxResource $tax;
-    public readonly ShieldResource $shield;
-    public readonly ListenResource $listen;
-    public readonly Webhooks $webhooks;
+    public GlobalResource $global;
+    public PaymentsResource $payments;
+    public CustomersResource $customers;
+    public RefundsResource $refunds;
+    public TransfersResource $transfers;
+    public BeneficiariesResource $beneficiaries;
+    public LinksResource $links;
+    public BalanceResource $balance;
+    public EventsResource $events;
+    public AccountsResource $accounts;
+    public WebhookEndpointsResource $webhookEndpoints;
+    public InvoicesResource $invoices;
+    public DisputesResource $disputes;
+    public IdentityResource $identity;
+    public TaxResource $tax;
+    public ShieldResource $shield;
+    public ListenResource $listen;
+    public Webhooks $webhooks;
 
     /**
      * @param  array{

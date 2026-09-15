@@ -15,7 +15,9 @@ use JsonSerializable;
 abstract class ApiObject implements ArrayAccess, JsonSerializable
 {
     /** @param  array<string, mixed>  $values */
-    public function __construct(protected array $values) {}
+    final public function __construct(protected array $values)
+    {
+    }
 
     /** @param  array<string, mixed>  $values */
     public static function from(array $values): static

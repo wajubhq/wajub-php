@@ -13,7 +13,7 @@ final class ListenResource extends BaseClient
     /** @return array<string, mixed> */
     public function config(): array
     {
-        return HttpUtils::pickResource($this->get('/listen/config'), 'config', 'listen');
+        return HttpUtils::pickResource($this->get('/listen/config'), 'realtime');
     }
 
     /**
@@ -22,6 +22,6 @@ final class ListenResource extends BaseClient
      */
     public function auth(array $params, ?RequestOptions $options = null): array
     {
-        return HttpUtils::pickResource($this->post('/listen/auth', $params, $options), 'auth', 'listen');
+        return HttpUtils::pickResource($this->post('/listen/auth', $params, $options), 'data');
     }
 }

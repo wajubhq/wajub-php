@@ -9,9 +9,14 @@ use Wajub\Http\HttpUtils;
 
 final class BalanceResource extends BaseClient
 {
-    /** @return array<string, mixed> */
-    public function retrieve(): array
+    /**
+     * `GET /balance`. Pass `['currency' => 'XAF']` to convert the totals.
+     *
+     * @param  array<string, mixed>|null  $params
+     * @return array<string, mixed>
+     */
+    public function retrieve(?array $params = null): array
     {
-        return HttpUtils::pickResource($this->get('/balance'), 'balance', 'data');
+        return HttpUtils::pickResource($this->get('/balance', $params), 'balance');
     }
 }

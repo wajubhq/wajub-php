@@ -44,12 +44,14 @@ final class TaxResource extends BaseClient
     }
 
     /**
+     * `GET /tax/reports`. Returns one aggregated report for the requested period.
+     *
      * @param  array<string, mixed>|null  $params
-     * @return array{data: array<int, array<string, mixed>>, meta: array<string, mixed>|null}
+     * @return array<string, mixed>
      */
     public function reports(?array $params = null): array
     {
-        return HttpUtils::pickList($this->get('/tax/reports', $params), 'reports', 'tax_reports');
+        return HttpUtils::pickResource($this->get('/tax/reports', $params), 'report');
     }
 
     /**
@@ -64,7 +66,7 @@ final class TaxResource extends BaseClient
     /** @return array<string, mixed> */
     public function retrieveCode(string $code): array
     {
-        return HttpUtils::pickResource($this->get('/tax/codes/'.rawurlencode($code)), 'tax_code', 'code');
+        return HttpUtils::pickResource($this->get('/tax/codes/'.rawurlencode($code)), 'tax_code');
     }
 
     /**

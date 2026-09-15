@@ -44,12 +44,14 @@ final class ShieldResource extends BaseClient
     }
 
     /**
+     * `POST /shield/blocklist`. The API answers with the updated blocklist, same shape as `listBlocklist()`.
+     *
      * @param  array<string, mixed>  $params
-     * @return array<string, mixed>
+     * @return array{data: array<int, array<string, mixed>>, meta: array<string, mixed>|null}
      */
     public function addToBlocklist(array $params, ?RequestOptions $options = null): array
     {
-        return HttpUtils::pickResource($this->post('/shield/blocklist', $params, $options), 'blocklist', 'entry');
+        return HttpUtils::pickList($this->post('/shield/blocklist', $params, $options), 'blocklist');
     }
 
     public function removeFromBlocklist(string $id, ?RequestOptions $options = null): void
