@@ -1,0 +1,37 @@
+name: Bug Report
+description: Report a bug in the Wajub PHP SDK
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please make sure the behaviour differs from what is documented on [docs.wajub.com](https://docs.wajub.com/libraries/sdks/php) before filing. Security issues must be reported to security@wajub.com, never here.
+  - type: input
+    id: sdk-version
+    attributes:
+      label: SDK version
+      placeholder: "1.1.1"
+    validations:
+      required: true
+  - type: input
+    id: php-version
+    attributes:
+      label: PHP version
+      placeholder: "8.4.7"
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What happened, and what did you expect to happen instead?
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to reproduce
+      description: A minimal code sample that reproduces the problem. Never include real API keys.
+      render: php
+    validations:
+      required: true

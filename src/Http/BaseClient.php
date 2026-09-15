@@ -7,6 +7,7 @@ namespace Wajub\Http;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use Wajub\Exception\ApiConnectionException;
+use Wajub\Exception\WajubError;
 use Wajub\RequestOptions;
 use Wajub\Version;
 
@@ -110,7 +111,7 @@ class BaseClient
         if ($query !== null) {
             $requestOptions['query'] = array_filter(
                 $query,
-                static fn ($value) => $value !== null,
+                static fn ($value): bool => $value !== null,
             );
         }
 
@@ -138,10 +139,15 @@ class BaseClient
             }
 
             $status = $response->getStatusCode();
-            $decoded = json_decode((string) $response->getBody(), true);
+            $rawBody = (string) $response->getBody();
+            $decoded = json_decode($rawBody, true);
             $data = is_array($decoded) ? $decoded : [];
 
             if ($status >= 200 && $status < 300) {
+                if (trim($rawBody) !== '' && ! is_array($decoded)) {
+                    throw new WajubError('Wajub: the API returned a non-JSON body.', 'invalid_response', $status);
+                }
+
                 return $data;
             }
 

@@ -1,12 +1,22 @@
-/vendor/
-/.phpunit.cache/
-/.phpunit.result.cache/
+# Composer Related
 composer.lock
+/vendor
 
-/.idea/
-/.vscode/
+# Caches
+.phpunit.cache
+.phpunit.result.cache
+/build
+/coverage
+
+# Editors
+/.idea
+/.fleet
+/.vscode
 *.swp
 .DS_Store
 
+# Misc
+phpunit.xml
+phpstan.neon
 .env
 .env.local

@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Documentation
+    url: https://docs.wajub.com/libraries/sdks/php
+    about: The SDK reference, quick start and Laravel integration guide
+  - name: Support
+    url: mailto:support@wajub.com
+    about: Questions about your account, a payment or an integration
+  - name: Security issue
+    url: mailto:security@wajub.com
+    about: Report a vulnerability privately
