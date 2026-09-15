@@ -6,11 +6,11 @@ namespace Wajub;
 
 use Wajub\Exception\WebhookSignatureVerificationError;
 
-final class Webhooks
+final readonly class Webhooks
 {
-    private const DEFAULT_TOLERANCE_SECONDS = 300;
+    private const int DEFAULT_TOLERANCE_SECONDS = 300;
 
-    public function __construct(private readonly string $secret)
+    public function __construct(private string $secret)
     {
     }
 

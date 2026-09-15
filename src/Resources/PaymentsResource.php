@@ -18,7 +18,7 @@ final class PaymentsResource extends BaseClient
     {
         $idempotencyKey = $params['idempotencyKey'] ?? null;
         unset($params['idempotencyKey']);
-        $opts = $options ?? new RequestOptions;
+        $opts = $options ?? new RequestOptions();
         if ($idempotencyKey !== null) {
             $opts = new RequestOptions(
                 idempotencyKey: $idempotencyKey,
@@ -30,6 +30,9 @@ final class PaymentsResource extends BaseClient
         return $this->toPaymentObject($this->post('/payments', $params, $opts));
     }
 
+    /**
+     * @param  array<string, mixed>  $params
+     */
     public function initialize(array $params, ?RequestOptions $options = null): Payment
     {
         return $this->create($params, $options);
@@ -61,29 +64,23 @@ final class PaymentsResource extends BaseClient
     }
 
     /**
+     * `POST /payments/{uid}` — charge the payment on a channel (`cm.mtn`, `card`, …).
+     *
      * @param  array<string, mixed>  $params
      */
     public function process(string $id, array $params, ?RequestOptions $options = null): Payment
     {
-        return Payment::from(
-            HttpUtils::pickResource(
-                $this->post('/payments/'.rawurlencode($id), $params, $options),
-                'transaction',
-            ),
-        );
+        return $this->toProcessedPayment($this->post('/payments/'.rawurlencode($id), $params, $options));
     }
 
     /**
+     * `POST /payments/{uid}/splits` — charge one installment of a split payment.
+     *
      * @param  array<string, mixed>  $params
      */
     public function processSplit(string $id, array $params, ?RequestOptions $options = null): Payment
     {
-        return Payment::from(
-            HttpUtils::pickResource(
-                $this->post('/payments/'.rawurlencode($id).'/splits', $params, $options),
-                'transaction',
-            ),
-        );
+        return $this->toProcessedPayment($this->post('/payments/'.rawurlencode($id).'/splits', $params, $options));
     }
 
     /**
@@ -96,6 +93,26 @@ final class PaymentsResource extends BaseClient
             $this->get('/payments/'.rawurlencode($id).'/refunds', $params),
             'refunds',
         );
+    }
+
+    /**
+     * A processing response carries the transaction plus, depending on the channel,
+     * a next step for the payer: `action`, `confirm_url`, `simulator_url` (sandbox)
+     * or `crypto.deposit`. Those are kept on the returned object.
+     *
+     * @param  array<string, mixed>  $body
+     */
+    private function toProcessedPayment(array $body): Payment
+    {
+        $transaction = HttpUtils::pickResource($body, 'transaction');
+
+        foreach (['action', 'confirm_url', 'simulator_url', 'crypto.deposit'] as $key) {
+            if (array_key_exists($key, $body)) {
+                $transaction[$key] = $body[$key];
+            }
+        }
+
+        return Payment::from($transaction);
     }
 
     /**
