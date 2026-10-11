@@ -14,7 +14,7 @@ final class Version
      * tell from a request what a merchant was actually running. A release
      * that does not update this line is not a release — see RELEASING.md.
      */
-    public const string VERSION = '2.0.0';
+    public const string VERSION = '2.0.1';
 
     public const string API_URL = 'https://api.wajub.com';
 }

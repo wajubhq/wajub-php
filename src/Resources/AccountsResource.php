@@ -6,13 +6,14 @@ namespace Wajub\Resources;
 
 use GuzzleHttp\Client;
 use Wajub\Http\HttpUtils;
+use Wajub\Objects\Account;
 use Wajub\RequestOptions;
 
 final class AccountsResource extends CrudResource
 {
     public function __construct(string $apiKey, string $baseUrl, ?string $prefix = 'wajub', ?Client $http = null, ?int $maxNetworkRetries = null)
     {
-        parent::__construct($apiKey, $baseUrl, 'accounts', 'account', 'accounts', $prefix, $http, maxNetworkRetries: $maxNetworkRetries);
+        parent::__construct($apiKey, $baseUrl, 'accounts', 'account', 'accounts', $prefix, $http, Account::class, $maxNetworkRetries);
     }
 
     /** @return array<string, mixed> */
