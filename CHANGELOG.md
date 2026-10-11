@@ -2,6 +2,16 @@
 
 All notable changes to `wajub/wajub-php` will be documented in this file.
 
+## v2.0.1 - 2026-10-11
+
+### What's Changed
+
+* Fix `Cannot instantiate abstract class Wajub\Objects\ApiObject` on `create()`, `retrieve()` and `update()` of `transfers`, `beneficiaries`, `links`, `invoices`, `accounts` and `webhookEndpoints`. In 2.0.0 the request was sent and the error was thrown on the answer, so the transfer, the beneficiary or the link existed and the caller never received it. If you retried a `transfers->create()` that failed this way without an idempotency key, check for a duplicate payout
+* Return `Transfer`, `Beneficiary`, `Link`, `Invoice`, `Account` and `WebhookEndpoint` objects from those resources, read like `Payment`, `Customer` and `Refund` (`$transfer->status` or `$transfer['status']`)
+* Refuse an object class that cannot be instantiated when a resource is built, before any request is sent
+
+**Full Changelog**: https://github.com/wajubhq/wajub-php/compare/v2.0.0...v2.0.1
+
 ## v2.0.0 - 2026-09-15
 
 ### Breaking Changes

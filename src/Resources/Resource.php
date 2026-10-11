@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Wajub\Resources;
 
 use GuzzleHttp\Client;
+use InvalidArgumentException;
+use ReflectionClass;
 use Wajub\Http\BaseClient;
 use Wajub\Http\HttpUtils;
 use Wajub\Objects\ApiObject;
@@ -17,7 +19,7 @@ use Wajub\RequestOptions;
 class Resource extends BaseClient
 {
     /**
-     * @param  class-string<ApiObject>  $objectClass
+     * @param  class-string<ApiObject>  $objectClass  A concrete class: ApiObject itself is abstract.
      */
     public function __construct(
         string $apiKey,
@@ -30,6 +32,12 @@ class Resource extends BaseClient
         protected string $objectClass = ApiObject::class,
         ?int $maxNetworkRetries = null,
     ) {
+        // Refused here, before any request: a class that cannot be built would
+        // otherwise fail on the answer, after the API has acted on the call.
+        if (! (new ReflectionClass($objectClass))->isInstantiable()) {
+            throw new InvalidArgumentException("Wajub: {$objectClass} cannot be instantiated; pass a concrete ApiObject class");
+        }
+
         parent::__construct($apiKey, $baseUrl, $idempotencyKeyPrefix, $http, $maxNetworkRetries);
     }
 

@@ -2,15 +2,30 @@
 
 declare(strict_types=1);
 
+use Wajub\Objects\Account;
+use Wajub\Objects\ApiObject;
+use Wajub\Objects\Beneficiary;
+use Wajub\Objects\Invoice;
+use Wajub\Objects\Link;
 use Wajub\Objects\Refund;
+use Wajub\Objects\Transfer;
+use Wajub\Objects\WebhookEndpoint;
+use Wajub\Resources\AccountsResource;
 use Wajub\Resources\BalanceResource;
+use Wajub\Resources\BeneficiariesResource;
+use Wajub\Resources\CrudResource;
 use Wajub\Resources\DisputesResource;
+use Wajub\Resources\InvoicesResource;
+use Wajub\Resources\LinksResource;
 use Wajub\Resources\ListenResource;
 use Wajub\Resources\PaymentsResource;
 use Wajub\Resources\RefundsResource;
+use Wajub\Resources\Resource;
 use Wajub\Resources\ShieldResource;
 use Wajub\Resources\TaxResource;
 use Wajub\Resources\TransfersResource;
+use Wajub\Resources\WebhookEndpointsResource;
+use Wajub\Wajub;
 
 it('unwraps the transaction and authorization fields on payment create', function (): void {
     $http = mockHttpClient([jsonResponse([
@@ -176,4 +191,76 @@ it('unwraps tax reports, tax codes, listen and shield responses under their api 
 
     $shield = new ShieldResource(API_KEY, BASE_URL, 'wajub', $http);
     expect($shield->addToBlocklist(['type' => 'email', 'value' => 'a@b.c'])['data'][0]['id'])->toBe('bl_1');
+});
+
+/**
+ * 2.0.0 sent the request, then failed building the answer: these six resources
+ * named no object class, so the result fell back to the abstract ApiObject and
+ * PHP threw "Cannot instantiate abstract class". The transfer was created, the
+ * caller got an Error instead of it, and a retry without an idempotency key
+ * sent the money twice.
+ */
+it('returns an object from create and retrieve on every resource', function (string $resource, string $key, string $object): void {
+    $http = mockHttpClient([
+        jsonResponse([$key => ['id' => 'obj_1', 'status' => 'pending']], 201),
+        jsonResponse([$key => ['id' => 'obj_1', 'status' => 'succeeded']]),
+    ]);
+    $client = new $resource(API_KEY, BASE_URL, 'wajub', $http);
+
+    $created = $client->create(['name' => 'x']);
+    $retrieved = $client->retrieve('obj_1');
+
+    expect($created)->toBeInstanceOf($object)
+        ->and($created->id)->toBe('obj_1')
+        ->and($created['status'])->toBe('pending')
+        ->and($retrieved)->toBeInstanceOf($object)
+        ->and($retrieved->status)->toBe('succeeded');
+})->with([
+    'transfers' => [TransfersResource::class, 'transfer', Transfer::class],
+    'beneficiaries' => [BeneficiariesResource::class, 'beneficiary', Beneficiary::class],
+    'links' => [LinksResource::class, 'link', Link::class],
+    'invoices' => [InvoicesResource::class, 'invoice', Invoice::class],
+    'accounts' => [AccountsResource::class, 'account', Account::class],
+    'webhook endpoints' => [WebhookEndpointsResource::class, 'endpoint', WebhookEndpoint::class],
+]);
+
+it('returns an object from update on every resource that has one', function (string $resource, string $key, string $object): void {
+    $http = mockHttpClient([jsonResponse([$key => ['id' => 'obj_1', 'name' => 'renamed']])]);
+
+    $updated = (new $resource(API_KEY, BASE_URL, 'wajub', $http))->update('obj_1', ['name' => 'renamed']);
+
+    expect($updated)->toBeInstanceOf($object)
+        ->and($updated->name)->toBe('renamed');
+})->with([
+    'beneficiaries' => [BeneficiariesResource::class, 'beneficiary', Beneficiary::class],
+    'links' => [LinksResource::class, 'link', Link::class],
+    'invoices' => [InvoicesResource::class, 'invoice', Invoice::class],
+    'accounts' => [AccountsResource::class, 'account', Account::class],
+    'webhook endpoints' => [WebhookEndpointsResource::class, 'endpoint', WebhookEndpoint::class],
+]);
+
+it('gives no resource of the client an object class it cannot build', function (): void {
+    $wajub = new Wajub(['api_key' => API_KEY]);
+    $objectClass = new ReflectionProperty(Resource::class, 'objectClass');
+
+    foreach ((new ReflectionClass($wajub))->getProperties() as $property) {
+        $resource = $property->getValue($wajub);
+
+        if (! $resource instanceof Resource) {
+            continue;
+        }
+
+        $class = new ReflectionClass($objectClass->getValue($resource));
+
+        expect($class->isInstantiable())->toBeTrue("{$property->getName()} builds {$class->getName()}")
+            ->and($class->isSubclassOf(ApiObject::class))->toBeTrue();
+    }
+});
+
+it('refuses an object class it cannot build before any request is sent', function (): void {
+    [$http, $mock] = mockClientWithCapture([jsonResponse(['thing' => ['id' => 'obj_1']], 201)]);
+
+    expect(fn () => new CrudResource(API_KEY, BASE_URL, 'things', 'thing', 'things', 'wajub', $http))
+        ->toThrow(InvalidArgumentException::class, 'cannot be instantiated')
+        ->and($mock->count())->toBe(1);
 });
