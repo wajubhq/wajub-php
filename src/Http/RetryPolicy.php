@@ -45,6 +45,31 @@ final class RetryPolicy
         return (int) ($base * $jitter);
     }
 
+    /**
+     * The `409` the API answers while a request with the same `Idempotency-Key`
+     * is still running (`errors.idempotency_key`). A call sent again after a
+     * timeout can arrive before the first has finished: its answer is on the
+     * way, so the call is worth repeating with the same key. Every other `409`
+     * is a real refusal.
+     *
+     * @param  array<string, mixed>  $body
+     */
+    public static function isIdempotencyKeyInProgress(int $status, array $body): bool
+    {
+        return $status === 409
+            && is_array($body['errors'] ?? null)
+            && array_key_exists('idempotency_key', $body['errors']);
+    }
+
+    /**
+     * The pause before asking again about a key still being processed: 2, 4,
+     * then 8 seconds, never more than the usual cap.
+     */
+    public static function idempotencyConflictDelayMicroseconds(int $attempt): int
+    {
+        return min(2 ** max(1, $attempt), self::MAX_DELAY_SECONDS) * 1_000_000;
+    }
+
     public static function parseRetryAfter(ResponseInterface $response): ?int
     {
         $header = trim($response->getHeaderLine('Retry-After'));

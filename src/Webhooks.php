@@ -18,18 +18,23 @@ final readonly class Webhooks
      * Verifies the signature and timestamp of an inbound webhook and returns the decoded event.
      *
      * A tolerance of 0 or less uses the default 300s window; there is no way to disable
-     * replay protection.
+     * replay protection. A missing signature or timestamp header (`$request->header()`
+     * returns null) is a WebhookSignatureVerificationError, like a wrong one.
      *
      * @return array<string, mixed>
      */
     public function constructEvent(
         string $payload,
-        string $signature,
-        string $timestamp,
+        ?string $signature,
+        ?string $timestamp,
         int $tolerance = self::DEFAULT_TOLERANCE_SECONDS,
     ): array {
         if ($this->secret === '') {
             throw new \InvalidArgumentException('Wajub: webhookSecret is required for webhooks.constructEvent()');
+        }
+
+        if ($signature === null || $signature === '' || $timestamp === null || $timestamp === '') {
+            throw new WebhookSignatureVerificationError('Missing X-Wajub-Signature or X-Wajub-Timestamp header.');
         }
 
         if (! str_starts_with($signature, 'v1=')) {

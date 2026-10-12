@@ -9,6 +9,8 @@ All notable changes to `wajub/wajub-php` will be documented in this file.
 * Fix `Cannot instantiate abstract class Wajub\Objects\ApiObject` on `create()`, `retrieve()` and `update()` of `transfers`, `beneficiaries`, `links`, `invoices`, `accounts` and `webhookEndpoints`. In 2.0.0 the request was sent and the error was thrown on the answer, so the transfer, the beneficiary or the link existed and the caller never received it. If you retried a `transfers->create()` that failed this way without an idempotency key, check for a duplicate payout
 * Return `Transfer`, `Beneficiary`, `Link`, `Invoice`, `Account` and `WebhookEndpoint` objects from those resources, read like `Payment`, `Customer` and `Refund` (`$transfer->status` or `$transfer['status']`)
 * Refuse an object class that cannot be instantiated when a resource is built, before any request is sent
+* Retry the `409` the API answers while a request with the same `Idempotency-Key` is still being processed (`errors.idempotency_key`): a call sent again after a timeout now waits 2 then 4 seconds and returns the first request's result, within the usual 2 retries. Every other `409` is still thrown at once
+* `webhooks->constructEvent()` accepts a null signature or timestamp, as `$request->header()` returns when the header is missing, and throws `WebhookSignatureVerificationError` instead of a `TypeError`: your route answers 400, not 500
 
 **Full Changelog**: https://github.com/wajubhq/wajub-php/compare/v2.0.0...v2.0.1
 

@@ -158,6 +158,15 @@ class BaseClient
                 continue;
             }
 
+            // The same key still being processed: the first request's answer is
+            // coming. Asked again with the same key, the API returns it.
+            if ($idempotencyKey && RetryPolicy::isIdempotencyKeyInProgress($status, $data) && $attempt < $maxRetries) {
+                $attempt++;
+                usleep(RetryPolicy::idempotencyConflictDelayMicroseconds($attempt));
+
+                continue;
+            }
+
             $retryAfter = RetryPolicy::parseRetryAfter($response);
             throw HttpUtils::errorFromResponse($status, $data, $retryAfter);
         }

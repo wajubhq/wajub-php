@@ -101,3 +101,64 @@ it('accepts an empty body on success', function (): void {
 
     expect($client->del('/customers/cus_1'))->toBe([]);
 });
+
+/**
+ * A call sent again after a timeout can reach the API while the first one is
+ * still running: the API answers 409 with errors.idempotency_key. The answer
+ * is on its way, so the client asks again with the same key.
+ */
+function idempotencyKeyInProgress(): Response
+{
+    return jsonResponse([
+        'code' => 409,
+        'status' => 'Conflict',
+        'message' => 'A request with this Idempotency-Key is still being processed.',
+        'errors' => ['idempotency_key' => ['A request with this Idempotency-Key is still being processed.']],
+    ], 409);
+}
+
+it('asks again with the same key while that key is still being processed', function (): void {
+    $keys = [];
+    $capture = static function (Response $response) use (&$keys): callable {
+        return static function ($request) use ($response, &$keys): Response {
+            $keys[] = $request->getHeaderLine('Idempotency-Key');
+
+            return $response;
+        };
+    };
+    $http = mockHttpClient([
+        $capture(idempotencyKeyInProgress()),
+        $capture(jsonResponse(['transaction' => ['id' => 'trx_1']], 201)),
+    ]);
+    $client = new BaseClient(API_KEY, BASE_URL, 'wajub', $http);
+
+    $result = $client->post('/payments', ['amount' => 1000], new RequestOptions(idempotencyKey: 'ORDER-42'));
+
+    expect($result['transaction']['id'])->toBe('trx_1')
+        ->and($keys)->toBe(['ORDER-42', 'ORDER-42']);
+});
+
+it('raises that 409 once the retries are spent', function (): void {
+    $http = mockHttpClient([idempotencyKeyInProgress(), idempotencyKeyInProgress()]);
+    $client = new BaseClient(API_KEY, BASE_URL, 'wajub', $http, maxNetworkRetries: 1);
+
+    $client->post('/payments', ['amount' => 1000]);
+})->throws(WajubError::class, 'still being processed');
+
+it('raises any other 409 at once', function (): void {
+    [$http, $mock] = mockClientWithCapture([
+        jsonResponse(['code' => 409, 'error_code' => 'payment_in_progress', 'message' => 'A charge is already in progress for this payment.'], 409),
+        jsonResponse(['ok' => true]),
+    ]);
+    $client = new BaseClient(API_KEY, BASE_URL, 'wajub', $http);
+
+    expect(fn () => $client->post('/payments/trx_1', ['channel' => 'cm.mtn']))->toThrow(WajubError::class, 'already in progress')
+        ->and($mock->count())->toBe(1);
+});
+
+it('waits 2, 4 then 8 seconds between those retries, never more than the cap', function (): void {
+    expect(RetryPolicy::idempotencyConflictDelayMicroseconds(1))->toBe(2_000_000)
+        ->and(RetryPolicy::idempotencyConflictDelayMicroseconds(2))->toBe(4_000_000)
+        ->and(RetryPolicy::idempotencyConflictDelayMicroseconds(3))->toBe(8_000_000)
+        ->and(RetryPolicy::idempotencyConflictDelayMicroseconds(4))->toBe(10_000_000);
+});

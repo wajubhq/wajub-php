@@ -44,3 +44,11 @@ it('rejects a timestamp outside the tolerance window', function (): void {
 it('requires a webhook secret', function (): void {
     new Webhooks('')->constructEvent('{}', 'v1=abc', (string) time());
 })->throws(InvalidArgumentException::class);
+
+it('answers a missing signature header with a signature error, not a TypeError', function (?string $signature, ?string $timestamp): void {
+    new Webhooks(WEBHOOK_SECRET)->constructEvent('{"event":"payment.succeeded"}', $signature, $timestamp);
+})->with([
+    'no signature' => [null, '1760000000'],
+    'no timestamp' => ['v1=deadbeef', null],
+    'empty signature' => ['', '1760000000'],
+])->throws(WebhookSignatureVerificationError::class, 'Missing X-Wajub-Signature or X-Wajub-Timestamp header');
