@@ -17,7 +17,7 @@ body:
     id: php-version
     attributes:
       label: PHP version
-      placeholder: "8.4.7"
+      description: The first line `php -v` prints.
     validations:
       required: true
   - type: textarea
