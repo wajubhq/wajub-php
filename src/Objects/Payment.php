@@ -19,7 +19,7 @@ namespace Wajub\Objects;
  * @property-read array{channel?: string, account?: string}|null $payment_method
  * @property-read string|null $channel
  * @property-read string|null $callback
- * @property-read array<string, mixed>|null $theming
+ * @property-read array<string, mixed>|null $theming Deprecated: always null, the API no longer returns it. The payment page shows your account's branding, set in the Wajub Dashboard.
  * @property-read bool|null $sandbox
  * @property-read array<int, array<string, mixed>>|null $items
  * @property-read array<string, mixed>|null $metadata
