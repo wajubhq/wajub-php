@@ -21,7 +21,7 @@ final class DisputesResource extends BaseClient
     /** @return array<string, mixed> */
     public function retrieve(string $id): array
     {
-        return HttpUtils::pickResource($this->get('/disputes/'.rawurlencode($id)), 'dispute');
+        return HttpUtils::pickResource($this->get('/disputes/'.HttpUtils::pathId($id)), 'dispute');
     }
 
     /**
@@ -31,7 +31,7 @@ final class DisputesResource extends BaseClient
     public function submitEvidence(string $id, array $params, ?RequestOptions $options = null): array
     {
         return HttpUtils::pickResource(
-            $this->post('/disputes/'.rawurlencode($id).'/submit-evidence', $params, $options),
+            $this->post('/disputes/'.HttpUtils::pathId($id).'/submit-evidence', $params, $options),
             'dispute',
         );
     }
@@ -45,7 +45,7 @@ final class DisputesResource extends BaseClient
     public function accept(string $id, ?array $params = null, ?RequestOptions $options = null): array
     {
         return HttpUtils::pickResource(
-            $this->post('/disputes/'.rawurlencode($id).'/accept', $params, $options),
+            $this->post('/disputes/'.HttpUtils::pathId($id).'/accept', $params, $options),
             'dispute',
         );
     }
@@ -59,7 +59,7 @@ final class DisputesResource extends BaseClient
     public function close(string $id, ?array $params = null, ?RequestOptions $options = null): array
     {
         return HttpUtils::pickResource(
-            $this->post('/disputes/'.rawurlencode($id).'/close', $params, $options),
+            $this->post('/disputes/'.HttpUtils::pathId($id).'/close', $params, $options),
             'dispute',
         );
     }
@@ -71,7 +71,7 @@ final class DisputesResource extends BaseClient
     public function sendMessage(string $id, array $params, ?RequestOptions $options = null): array
     {
         return HttpUtils::pickResource(
-            $this->post('/disputes/'.rawurlencode($id).'/messages', $params, $options),
+            $this->post('/disputes/'.HttpUtils::pathId($id).'/messages', $params, $options),
             'dispute',
         );
     }

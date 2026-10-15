@@ -18,13 +18,13 @@ class CrudResource extends Resource
      */
     public function update(string $id, array $params, ?RequestOptions $options = null): ApiObject
     {
-        $res = $this->put("/{$this->path}/".rawurlencode($id), $params, $options);
+        $res = $this->put("/{$this->path}/".HttpUtils::pathId($id), $params, $options);
 
         return $this->toObject(HttpUtils::pickResource($res, $this->singular));
     }
 
     public function delete(string $id, ?RequestOptions $options = null): void
     {
-        $this->del("/{$this->path}/".rawurlencode($id), $options);
+        $this->del("/{$this->path}/".HttpUtils::pathId($id), $options);
     }
 }

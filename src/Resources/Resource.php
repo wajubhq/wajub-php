@@ -53,7 +53,7 @@ class Resource extends BaseClient
 
     public function retrieve(string $id): ApiObject
     {
-        $res = $this->get("/{$this->path}/".rawurlencode($id));
+        $res = $this->get("/{$this->path}/".HttpUtils::pathId($id));
 
         return $this->toObject(HttpUtils::pickResource($res, $this->singular));
     }

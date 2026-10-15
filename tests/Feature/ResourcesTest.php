@@ -14,7 +14,9 @@ use Wajub\Resources\AccountsResource;
 use Wajub\Resources\BalanceResource;
 use Wajub\Resources\BeneficiariesResource;
 use Wajub\Resources\CrudResource;
+use Wajub\Resources\CustomersResource;
 use Wajub\Resources\DisputesResource;
+use Wajub\Resources\EventsResource;
 use Wajub\Resources\InvoicesResource;
 use Wajub\Resources\LinksResource;
 use Wajub\Resources\ListenResource;
@@ -294,3 +296,54 @@ it('refuses an object class it cannot build before any request is sent', functio
         ->toThrow(InvalidArgumentException::class, 'cannot be instantiated')
         ->and($mock->count())->toBe(1);
 });
+
+// The API decodes %2F before it matches a route, and Guzzle resolves "." and
+// ".." segments, so such an id would reach another route than the method's:
+// retrieve('pay_1/refunds') would list refunds, deleteTaxId('cus_1', '..')
+// would delete the customer.
+it('refuses an id that would reach another route, before any request is sent', function (string $resource, string $method, array $args): void {
+    [$http, $mock] = mockClientWithCapture([jsonResponse([])]);
+    $client = new $resource(API_KEY, BASE_URL, 'wajub', $http);
+
+    foreach (['pay_1/refunds', '/', '..', '.', ''] as $id) {
+        $call = fn (): mixed => $client->{$method}(...array_map(fn (mixed $arg): mixed => $arg === 'ID' ? $id : $arg, $args));
+
+        expect($call)->toThrow(InvalidArgumentException::class, 'is not a Wajub id');
+    }
+
+    expect($mock->count())->toBe(1);
+})->with([
+    'retrieve' => [TransfersResource::class, 'retrieve', ['ID']],
+    'update' => [CustomersResource::class, 'update', ['ID', ['name' => 'x']]],
+    'delete' => [CustomersResource::class, 'delete', ['ID']],
+    'accounts regenerateToken' => [AccountsResource::class, 'regenerateToken', ['ID']],
+    'events retrieve' => [EventsResource::class, 'retrieve', ['ID']],
+    'events resend' => [EventsResource::class, 'resend', ['ID']],
+    'disputes retrieve' => [DisputesResource::class, 'retrieve', ['ID']],
+    'disputes submitEvidence' => [DisputesResource::class, 'submitEvidence', ['ID', []]],
+    'disputes accept' => [DisputesResource::class, 'accept', ['ID']],
+    'disputes close' => [DisputesResource::class, 'close', ['ID']],
+    'disputes sendMessage' => [DisputesResource::class, 'sendMessage', ['ID', []]],
+    'invoices send' => [InvoicesResource::class, 'send', ['ID']],
+    'invoices markPaid' => [InvoicesResource::class, 'markPaid', ['ID']],
+    'invoices cancel' => [InvoicesResource::class, 'cancel', ['ID']],
+    'customers block' => [CustomersResource::class, 'block', ['ID']],
+    'customers unblock' => [CustomersResource::class, 'unblock', ['ID']],
+    'customers activate' => [CustomersResource::class, 'activate', ['ID']],
+    'customers deactivate' => [CustomersResource::class, 'deactivate', ['ID']],
+    'customers listTaxIds' => [CustomersResource::class, 'listTaxIds', ['ID']],
+    'customers createTaxId' => [CustomersResource::class, 'createTaxId', ['ID', []]],
+    'customers deleteTaxId customer' => [CustomersResource::class, 'deleteTaxId', ['ID', 'txi_1']],
+    'customers deleteTaxId tax id' => [CustomersResource::class, 'deleteTaxId', ['cus_1', 'ID']],
+    'payments retrieve' => [PaymentsResource::class, 'retrieve', ['ID']],
+    'payments cancel' => [PaymentsResource::class, 'cancel', ['ID']],
+    'payments process' => [PaymentsResource::class, 'process', ['ID', []]],
+    'payments processSplit' => [PaymentsResource::class, 'processSplit', ['ID', []]],
+    'payments listRefunds' => [PaymentsResource::class, 'listRefunds', ['ID']],
+    'webhookEndpoints rotateSecret' => [WebhookEndpointsResource::class, 'rotateSecret', ['ID']],
+    'shield removeFromBlocklist' => [ShieldResource::class, 'removeFromBlocklist', ['ID']],
+    'tax retrieveCode' => [TaxResource::class, 'retrieveCode', ['ID']],
+    'tax retrieveRegistration' => [TaxResource::class, 'retrieveRegistration', ['ID']],
+    'tax updateRegistration' => [TaxResource::class, 'updateRegistration', ['ID', []]],
+    'tax deleteRegistration' => [TaxResource::class, 'deleteRegistration', ['ID']],
+]);

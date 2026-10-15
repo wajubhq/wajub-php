@@ -23,7 +23,7 @@ final class CustomersResource extends CrudResource
     public function block(string $id, ?array $params = null, ?RequestOptions $options = null): array
     {
         return HttpUtils::pickResource(
-            $this->post('/customers/'.rawurlencode($id).'/block', $params, $options),
+            $this->post('/customers/'.HttpUtils::pathId($id).'/block', $params, $options),
             'customer',
         );
     }
@@ -32,7 +32,7 @@ final class CustomersResource extends CrudResource
     public function unblock(string $id, ?RequestOptions $options = null): array
     {
         return HttpUtils::pickResource(
-            $this->post('/customers/'.rawurlencode($id).'/unblock', null, $options),
+            $this->post('/customers/'.HttpUtils::pathId($id).'/unblock', null, $options),
             'customer',
         );
     }
@@ -41,7 +41,7 @@ final class CustomersResource extends CrudResource
     public function activate(string $id, ?RequestOptions $options = null): array
     {
         return HttpUtils::pickResource(
-            $this->post('/customers/'.rawurlencode($id).'/activate', null, $options),
+            $this->post('/customers/'.HttpUtils::pathId($id).'/activate', null, $options),
             'customer',
         );
     }
@@ -50,7 +50,7 @@ final class CustomersResource extends CrudResource
     public function deactivate(string $id, ?RequestOptions $options = null): array
     {
         return HttpUtils::pickResource(
-            $this->post('/customers/'.rawurlencode($id).'/deactivate', null, $options),
+            $this->post('/customers/'.HttpUtils::pathId($id).'/deactivate', null, $options),
             'customer',
         );
     }
@@ -59,7 +59,7 @@ final class CustomersResource extends CrudResource
     public function listTaxIds(string $customerId): array
     {
         return HttpUtils::pickList(
-            $this->get('/customers/'.rawurlencode($customerId).'/tax_ids'),
+            $this->get('/customers/'.HttpUtils::pathId($customerId).'/tax_ids'),
             'tax_ids',
         );
     }
@@ -71,7 +71,7 @@ final class CustomersResource extends CrudResource
     public function createTaxId(string $customerId, array $params, ?RequestOptions $options = null): array
     {
         return HttpUtils::pickResource(
-            $this->post('/customers/'.rawurlencode($customerId).'/tax_ids', $params, $options),
+            $this->post('/customers/'.HttpUtils::pathId($customerId).'/tax_ids', $params, $options),
             'tax_id',
         );
     }
@@ -79,7 +79,7 @@ final class CustomersResource extends CrudResource
     public function deleteTaxId(string $customerId, string $taxId, ?RequestOptions $options = null): void
     {
         $this->del(
-            '/customers/'.rawurlencode($customerId).'/tax_ids/'.rawurlencode($taxId),
+            '/customers/'.HttpUtils::pathId($customerId).'/tax_ids/'.HttpUtils::pathId($taxId),
             $options,
         );
     }
