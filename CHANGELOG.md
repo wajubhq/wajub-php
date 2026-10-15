@@ -8,8 +8,7 @@ All notable changes to `wajub/wajub-php` will be documented in this file.
 
 * Fix `Cannot instantiate abstract class Wajub\Objects\ApiObject` on `create()`, `retrieve()` and `update()` of `transfers`, `beneficiaries`, `links`, `invoices`, `accounts` and `webhookEndpoints`. In 2.0.0 the request was sent and the error was thrown on the answer, so the transfer, the beneficiary or the link existed and the caller never received it. If you retried a `transfers->create()` that failed this way without an idempotency key, check for a duplicate payout
 * Return `Transfer`, `Beneficiary`, `Link`, `Invoice`, `Account` and `WebhookEndpoint` objects from those resources, read like `Payment`, `Customer` and `Refund` (`$transfer->status` or `$transfer['status']`)
-* Refuse an object class that cannot be instantiated when a resource is built, before any request is sent
-* Retry the `409` the API answers while a request with the same `Idempotency-Key` is still being processed (`errors.idempotency_key`): a call sent again after a timeout now waits 2 then 4 seconds and returns the first request's result, within the usual 2 retries. Every other `409` is still thrown at once
+* A create sent again with the same idempotency key while the first is still running now returns the first request's result instead of a `409` error
 * `webhooks->constructEvent()` accepts a null signature or timestamp, as `$request->header()` returns when the header is missing, and throws `WebhookSignatureVerificationError` instead of a `TypeError`: your route answers 400, not 500
 
 **Full Changelog**: https://github.com/wajubhq/wajub-php/compare/v2.0.0...v2.0.1
@@ -22,23 +21,18 @@ All notable changes to `wajub/wajub-php` will be documented in this file.
 * Remove `update()` and `delete()` from `refunds` and `transfers`, the API has no such endpoints by @mckenziearts in https://github.com/wajubhq/wajub-php/pull/1
 * `tax->reports()` now returns the report object instead of an empty list by @mckenziearts in https://github.com/wajubhq/wajub-php/pull/1
 * `shield->addToBlocklist()` now returns the updated blocklist, same shape as `listBlocklist()` by @mckenziearts in https://github.com/wajubhq/wajub-php/pull/1
-* `listen->config()` and `listen->auth()` now unwrap the `realtime` and `data` keys instead of returning the raw envelope by @mckenziearts in https://github.com/wajubhq/wajub-php/pull/1
 
 ### New Features
 
-* Follow cursor pagination (`meta.next_cursor`, `meta.has_more`) in `getNextPage()` and `autoPagingIterator()` by @mckenziearts in https://github.com/wajubhq/wajub-php/pull/1
+* `getNextPage()` and `autoPagingIterator()` walk every list to its last page by @mckenziearts in https://github.com/wajubhq/wajub-php/pull/1
 * Keep `action`, `confirm_url`, `simulator_url` and `crypto.deposit` on the payment returned by `process()` and `processSplit()` by @mckenziearts in https://github.com/wajubhq/wajub-php/pull/1
 * Add `currency` filter to `balance->retrieve()` by @mckenziearts in https://github.com/wajubhq/wajub-php/pull/1
 * Add `merchant_response` to `disputes->accept()` and `disputes->close()` by @mckenziearts in https://github.com/wajubhq/wajub-php/pull/1
-* Document every `Payment`, `Customer`, `Refund` and `Event` field from the API resources by @mckenziearts in https://github.com/wajubhq/wajub-php/pull/1
+* Describe every `Payment`, `Customer`, `Refund` and `Event` field, so your IDE completes them by @mckenziearts in https://github.com/wajubhq/wajub-php/pull/1
 * Ship Laravel Boost guidelines and the `wajub-php-development` skill by @mckenziearts in https://github.com/wajubhq/wajub-php/pull/1
 
 ### What's Changed
 
-* Cap `Retry-After` at 10 seconds by @mckenziearts in https://github.com/wajubhq/wajub-php/pull/1
-* Throw `WajubError` on a `2xx` response with a non-JSON body by @mckenziearts in https://github.com/wajubhq/wajub-php/pull/1
-* Migrate the test suite to Pest 5 by @mckenziearts in https://github.com/wajubhq/wajub-php/pull/1
-* Add PHPStan, Rector, Pint (PSR-12) and GitHub Actions workflows by @mckenziearts in https://github.com/wajubhq/wajub-php/pull/1
-* Move usage documentation from the README to docs.wajub.com by @mckenziearts in https://github.com/wajubhq/wajub-php/pull/1
+* An unreadable success answer throws `WajubError` by @mckenziearts in https://github.com/wajubhq/wajub-php/pull/1
 
 **Full Changelog**: https://github.com/wajubhq/wajub-php/compare/v1.1.1...v2.0.0
