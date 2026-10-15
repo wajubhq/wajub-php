@@ -152,7 +152,7 @@ it('raises any other 409 at once', function (): void {
     ]);
     $client = new BaseClient(API_KEY, BASE_URL, 'wajub', $http);
 
-    expect(fn () => $client->post('/payments/trx_1', ['channel' => 'cm.mtn']))->toThrow(WajubError::class, 'already in progress')
+    expect(fn (): array => $client->post('/payments/trx_1', ['channel' => 'cm.mtn']))->toThrow(WajubError::class, 'already in progress')
         ->and($mock->count())->toBe(1);
 });
 

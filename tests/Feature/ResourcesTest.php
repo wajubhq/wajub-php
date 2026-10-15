@@ -227,7 +227,7 @@ it('returns an object from create and retrieve on every resource', function (str
 it('returns an object from update on every resource that has one', function (string $resource, string $key, string $object): void {
     $http = mockHttpClient([jsonResponse([$key => ['id' => 'obj_1', 'name' => 'renamed']])]);
 
-    $updated = (new $resource(API_KEY, BASE_URL, 'wajub', $http))->update('obj_1', ['name' => 'renamed']);
+    $updated = new $resource(API_KEY, BASE_URL, 'wajub', $http)->update('obj_1', ['name' => 'renamed']);
 
     expect($updated)->toBeInstanceOf($object)
         ->and($updated->name)->toBe('renamed');
@@ -243,7 +243,7 @@ it('gives no resource of the client an object class it cannot build', function (
     $wajub = new Wajub(['api_key' => API_KEY]);
     $objectClass = new ReflectionProperty(Resource::class, 'objectClass');
 
-    foreach ((new ReflectionClass($wajub))->getProperties() as $property) {
+    foreach (new ReflectionClass($wajub)->getProperties() as $property) {
         $resource = $property->getValue($wajub);
 
         if (! $resource instanceof Resource) {
@@ -260,7 +260,7 @@ it('gives no resource of the client an object class it cannot build', function (
 it('refuses an object class it cannot build before any request is sent', function (): void {
     [$http, $mock] = mockClientWithCapture([jsonResponse(['thing' => ['id' => 'obj_1']], 201)]);
 
-    expect(fn () => new CrudResource(API_KEY, BASE_URL, 'things', 'thing', 'things', 'wajub', $http))
+    expect(fn (): CrudResource => new CrudResource(API_KEY, BASE_URL, 'things', 'thing', 'things', 'wajub', $http))
         ->toThrow(InvalidArgumentException::class, 'cannot be instantiated')
         ->and($mock->count())->toBe(1);
 });

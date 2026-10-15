@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use Wajub\Http\BaseClient;
 use Wajub\Version;
 
 /**
@@ -18,13 +19,13 @@ function changelogVersion(): string
     return $matches[1] ?? '';
 }
 
-it('announces the version the changelog says was released', function () {
+it('announces the version the changelog says was released', function (): void {
     expect(Version::VERSION)->toBe(changelogVersion());
 });
 
-it('sends that version to the API', function () {
+it('sends that version to the API', function (): void {
     // The constant is not decoration: it is how a request identifies itself.
-    $client = new ReflectionClass(\Wajub\Http\BaseClient::class);
+    $client = new ReflectionClass(BaseClient::class);
 
     expect(file_get_contents($client->getFileName()))->toContain("'wajub-php/'.Version::VERSION");
 });
