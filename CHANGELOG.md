@@ -7,6 +7,7 @@ All notable changes to `wajub/wajub-php` will be documented in this file.
 ### Deprecated
 
 * `listen->config()` and `listen->auth()`, with `$wajub->listen`: the API answers them `410 Gone`. They still send the request, and now raise an `E_USER_DEPRECATED` notice. To receive webhooks on your machine, forward them with the Wajub CLI's [`wajub listen`](https://docs.wajub.com/developer-tools/cli/listen). They will be removed in the next major version
+* `$payment->theming`: the API no longer returns it, so it reads `null`, and it ignores a `theming` sent to `payments->create()`. The payment page shows your account's branding, set in the Wajub Dashboard
 
 ### What's Changed
 
