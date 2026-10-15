@@ -10,7 +10,7 @@ body:
     id: sdk-version
     attributes:
       label: SDK version
-      placeholder: "1.1.1"
+      description: The version `composer show wajub/wajub-php` prints.
     validations:
       required: true
   - type: input
