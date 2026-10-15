@@ -56,6 +56,10 @@ final readonly class Wajub
     public IdentityResource $identity;
     public TaxResource $tax;
     public ShieldResource $shield;
+    /**
+     * @deprecated 2.1.0 The API answers its methods 410 Gone. To receive webhooks
+     *             on your machine, forward them with the Wajub CLI's `wajub listen`.
+     */
     public ListenResource $listen;
     public Webhooks $webhooks;
 

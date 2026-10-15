@@ -172,12 +172,10 @@ it('sends merchant_response when accepting or closing a dispute', function (): v
     expect((string) $mock->getLastRequest()?->getBody())->toBe('');
 });
 
-it('unwraps tax reports, tax codes, listen and shield responses under their api keys', function (): void {
+it('unwraps tax reports, tax codes and shield responses under their api keys', function (): void {
     $http = mockHttpClient([
         jsonResponse(['report' => ['period' => '30d', 'total_tax' => 12.5]]),
         jsonResponse(['tax_code' => ['code' => 'txcd_1', 'name' => 'General']]),
-        jsonResponse(['realtime' => ['key' => 'k', 'channel' => 'private-team.1.sandbox']]),
-        jsonResponse(['data' => ['auth' => 'sig']]),
         jsonResponse(['blocklist' => [['id' => 'bl_1', 'type' => 'email']]]),
     ]);
 
@@ -185,12 +183,44 @@ it('unwraps tax reports, tax codes, listen and shield responses under their api 
     expect($tax->reports(['period' => '30d'])['total_tax'])->toBe(12.5)
         ->and($tax->retrieveCode('txcd_1')['name'])->toBe('General');
 
-    $listen = new ListenResource(API_KEY, BASE_URL, 'wajub', $http);
-    expect($listen->config()['channel'])->toBe('private-team.1.sandbox')
-        ->and($listen->auth(['socket_id' => '1', 'channel_name' => 'c'])['auth'])->toBe('sig');
-
     $shield = new ShieldResource(API_KEY, BASE_URL, 'wajub', $http);
     expect($shield->addToBlocklist(['type' => 'email', 'value' => 'a@b.c'])['data'][0]['id'])->toBe('bl_1');
+});
+
+it('deprecates listen config() and auth(), which the API answers 410 Gone, and still sends them as before', function (): void {
+    [$http, $mock] = mockClientWithCapture([
+        jsonResponse(['realtime' => ['key' => 'k', 'channel' => 'private-team.1.sandbox']]),
+        jsonResponse(['data' => ['auth' => 'sig']]),
+    ]);
+
+    $listen = new ListenResource(API_KEY, BASE_URL, 'wajub', $http);
+
+    // Caught here rather than left to the runner, which would report the
+    // test as deprecated although the notice is what it asserts.
+    $deprecations = [];
+    set_error_handler(function (int $level, string $message) use (&$deprecations): bool {
+        $deprecations[] = $message;
+
+        return true;
+    }, E_USER_DEPRECATED);
+
+    try {
+        expect($listen->config()['channel'])->toBe('private-team.1.sandbox')
+            ->and($mock->getLastRequest()?->getMethod())->toBe('GET')
+            ->and($mock->getLastRequest()?->getUri()->getPath())->toBe('/listen/config');
+
+        expect($listen->auth(['socket_id' => '1', 'channel_name' => 'c'])['auth'])->toBe('sig')
+            ->and($mock->getLastRequest()?->getMethod())->toBe('POST')
+            ->and($mock->getLastRequest()?->getUri()->getPath())->toBe('/listen/auth')
+            ->and(json_decode((string) $mock->getLastRequest()?->getBody(), true))->toBe(['socket_id' => '1', 'channel_name' => 'c']);
+    } finally {
+        restore_error_handler();
+    }
+
+    expect($deprecations)->toBe([
+        "Wajub: listen->config() is deprecated since 2.1.0 and the API answers it 410 Gone. To receive webhooks on your machine, forward them with the Wajub CLI's `wajub listen`.",
+        "Wajub: listen->auth() is deprecated since 2.1.0 and the API answers it 410 Gone. To receive webhooks on your machine, forward them with the Wajub CLI's `wajub listen`.",
+    ]);
 });
 
 /**
