@@ -2,6 +2,14 @@
 
 All notable changes to `wajub/wajub-php` will be documented in this file.
 
+## v2.1.0 - 2026-10-15
+
+### Deprecated
+
+* `listen->config()` and `listen->auth()`, with `$wajub->listen`: the API answers them `410 Gone`. They still send the request, and now raise an `E_USER_DEPRECATED` notice. To receive webhooks on your machine, forward them with the Wajub CLI's [`wajub listen`](https://docs.wajub.com/developer-tools/cli/listen). They will be removed in the next major version
+
+**Full Changelog**: https://github.com/wajubhq/wajub-php/compare/v2.0.1...v2.1.0
+
 ## v2.0.1 - 2026-10-11
 
 ### What's Changed
