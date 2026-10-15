@@ -20,7 +20,7 @@ final class WebhookEndpointsResource extends CrudResource
     public function rotateSecret(string $id, ?RequestOptions $options = null): array
     {
         return HttpUtils::pickResource(
-            $this->post('/webhooks/'.rawurlencode($id).'/rotate-secret', null, $options),
+            $this->post('/webhooks/'.HttpUtils::pathId($id).'/rotate-secret', null, $options),
             'endpoint',
         );
     }

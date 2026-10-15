@@ -8,6 +8,10 @@ All notable changes to `wajub/wajub-php` will be documented in this file.
 
 * `listen->config()` and `listen->auth()`, with `$wajub->listen`: the API answers them `410 Gone`. They still send the request, and now raise an `E_USER_DEPRECATED` notice. To receive webhooks on your machine, forward them with the Wajub CLI's [`wajub listen`](https://docs.wajub.com/developer-tools/cli/listen). They will be removed in the next major version
 
+### What's Changed
+
+* Every method that takes an id throws `InvalidArgumentException`, before sending anything, when the id contains `/` or is empty, `.` or `..`. Such an id reached another endpoint than the method's: `customers->delete('cus_1/tax_ids/txi_1')` deleted a tax id. Wajub ids never take these forms, so a valid call is unchanged
+
 **Full Changelog**: https://github.com/wajubhq/wajub-php/compare/v2.0.1...v2.1.0
 
 ## v2.0.1 - 2026-10-11

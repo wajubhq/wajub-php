@@ -57,3 +57,9 @@ it('builds a typed error from an error response', function (): void {
         ->and($error->httpStatus)->toBe(422)
         ->and($error->errors['amount'])->toBe('Must be positive');
 });
+
+it('encodes an id for a path, and keeps the dots inside one', function (): void {
+    expect(HttpUtils::pathId('pay_1'))->toBe('pay_1')
+        ->and(HttpUtils::pathId('pay 1'))->toBe('pay%201')
+        ->and(HttpUtils::pathId('trx.1..2'))->toBe('trx.1..2');
+});

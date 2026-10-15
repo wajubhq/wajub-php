@@ -66,7 +66,7 @@ final class TaxResource extends BaseClient
     /** @return array<string, mixed> */
     public function retrieveCode(string $code): array
     {
-        return HttpUtils::pickResource($this->get('/tax/codes/'.rawurlencode($code)), 'tax_code');
+        return HttpUtils::pickResource($this->get('/tax/codes/'.HttpUtils::pathId($code)), 'tax_code');
     }
 
     /**
@@ -94,7 +94,7 @@ final class TaxResource extends BaseClient
     public function retrieveRegistration(string $id): array
     {
         return HttpUtils::pickResource(
-            $this->get('/tax/registrations/'.rawurlencode($id)),
+            $this->get('/tax/registrations/'.HttpUtils::pathId($id)),
             'registration',
             'tax_registration',
         );
@@ -107,7 +107,7 @@ final class TaxResource extends BaseClient
     public function updateRegistration(string $id, array $params, ?RequestOptions $options = null): array
     {
         return HttpUtils::pickResource(
-            $this->put('/tax/registrations/'.rawurlencode($id), $params, $options),
+            $this->put('/tax/registrations/'.HttpUtils::pathId($id), $params, $options),
             'registration',
             'tax_registration',
         );
@@ -115,7 +115,7 @@ final class TaxResource extends BaseClient
 
     public function deleteRegistration(string $id, ?RequestOptions $options = null): void
     {
-        $this->del('/tax/registrations/'.rawurlencode($id), $options);
+        $this->del('/tax/registrations/'.HttpUtils::pathId($id), $options);
     }
 
     /**

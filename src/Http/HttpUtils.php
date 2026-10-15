@@ -30,6 +30,21 @@ final class HttpUtils
         return Version::API_URL;
     }
 
+    /**
+     * An id as one path segment. The API decodes %2F before it matches a
+     * route, and Guzzle resolves "." and ".." segments, so such an id would
+     * reach another route than the caller's: it is refused before sending.
+     * Wajub ids never contain "/".
+     */
+    public static function pathId(string $id): string
+    {
+        if (in_array($id, ['', '.', '..'], true) || str_contains($id, '/')) {
+            throw new \InvalidArgumentException(sprintf('Wajub: "%s" is not a Wajub id; an id is never empty, "." or "..", and never contains "/"', $id));
+        }
+
+        return rawurlencode($id);
+    }
+
     public static function createIdempotencyKey(string $prefix = 'wajub'): string
     {
         return $prefix.'-'.self::uuid();

@@ -20,7 +20,7 @@ final class AccountsResource extends CrudResource
     public function regenerateToken(string $id, ?RequestOptions $options = null): array
     {
         return HttpUtils::pickResource(
-            $this->post('/accounts/'.rawurlencode($id).'/token', null, $options),
+            $this->post('/accounts/'.HttpUtils::pathId($id).'/token', null, $options),
             'account',
         );
     }

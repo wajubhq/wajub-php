@@ -41,7 +41,7 @@ final class PaymentsResource extends BaseClient
     public function retrieve(string $id): Payment
     {
         return Payment::from(
-            HttpUtils::pickResource($this->get('/payments/'.rawurlencode($id)), 'transaction'),
+            HttpUtils::pickResource($this->get('/payments/'.HttpUtils::pathId($id)), 'transaction'),
         );
     }
 
@@ -57,7 +57,7 @@ final class PaymentsResource extends BaseClient
     {
         return Payment::from(
             HttpUtils::pickResource(
-                $this->del('/payments/'.rawurlencode($id), $options),
+                $this->del('/payments/'.HttpUtils::pathId($id), $options),
                 'transaction',
             ),
         );
@@ -70,7 +70,7 @@ final class PaymentsResource extends BaseClient
      */
     public function process(string $id, array $params, ?RequestOptions $options = null): Payment
     {
-        return $this->toProcessedPayment($this->post('/payments/'.rawurlencode($id), $params, $options));
+        return $this->toProcessedPayment($this->post('/payments/'.HttpUtils::pathId($id), $params, $options));
     }
 
     /**
@@ -80,7 +80,7 @@ final class PaymentsResource extends BaseClient
      */
     public function processSplit(string $id, array $params, ?RequestOptions $options = null): Payment
     {
-        return $this->toProcessedPayment($this->post('/payments/'.rawurlencode($id).'/splits', $params, $options));
+        return $this->toProcessedPayment($this->post('/payments/'.HttpUtils::pathId($id).'/splits', $params, $options));
     }
 
     /**
@@ -90,7 +90,7 @@ final class PaymentsResource extends BaseClient
     public function listRefunds(string $id, ?array $params = null): array
     {
         return HttpUtils::pickList(
-            $this->get('/payments/'.rawurlencode($id).'/refunds', $params),
+            $this->get('/payments/'.HttpUtils::pathId($id).'/refunds', $params),
             'refunds',
         );
     }
