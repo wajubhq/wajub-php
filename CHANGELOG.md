@@ -7,11 +7,11 @@ All notable changes to `wajub/wajub-php` will be documented in this file.
 ### Deprecated
 
 * `listen->config()` and `listen->auth()`, with `$wajub->listen`: the API answers them `410 Gone`. They still send the request, and now raise an `E_USER_DEPRECATED` notice. To receive webhooks on your machine, forward them with the Wajub CLI's [`wajub listen`](https://docs.wajub.com/developer-tools/cli/listen). They will be removed in the next major version
-* `$payment->theming`: the API no longer returns it, so it reads `null`, and it ignores a `theming` sent to `payments->create()`. The payment page shows your account's branding, set in the Wajub Dashboard
+* `theming` on payments: ignored on create, and `$payment->theming` reads `null` on payments created from now on. The payment page shows your account's branding, set in the Wajub Dashboard
 
-### What's Changed
+### Security
 
-* Every method that takes an id throws `InvalidArgumentException`, before sending anything, when the id contains `/` or is empty, `.` or `..`. Such an id reached another endpoint than the method's: `customers->delete('cus_1/tax_ids/txi_1')` deleted a tax id. Wajub ids never take these forms, so a valid call is unchanged
+* **An id that is not a Wajub id is refused before anything is sent.** If an id you pass can come from a URL or a form, a call could act on another resource of your account: `customers->delete('cus_1/tax_ids/txi_1')` deleted a tax ID. An id that is empty, `.` or `..`, or contains `/`, now throws `InvalidArgumentException`. Wajub ids never take these forms, so valid calls are unchanged
 
 **Full Changelog**: https://github.com/wajubhq/wajub-php/compare/v2.0.1...v2.1.0
 
