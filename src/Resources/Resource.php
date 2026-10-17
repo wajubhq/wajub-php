@@ -34,7 +34,7 @@ class Resource extends BaseClient
     ) {
         // Refused here, before any request: a class that cannot be built would
         // otherwise fail on the answer, after the API has acted on the call.
-        if (! (new ReflectionClass($objectClass))->isInstantiable()) {
+        if (! new ReflectionClass($objectClass)->isInstantiable()) {
             throw new InvalidArgumentException("Wajub: {$objectClass} cannot be instantiated; pass a concrete ApiObject class");
         }
 
@@ -53,7 +53,7 @@ class Resource extends BaseClient
 
     public function retrieve(string $id): ApiObject
     {
-        $res = $this->get("/{$this->path}/".rawurlencode($id));
+        $res = $this->get("/{$this->path}/".HttpUtils::pathId($id));
 
         return $this->toObject(HttpUtils::pickResource($res, $this->singular));
     }

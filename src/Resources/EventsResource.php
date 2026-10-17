@@ -22,7 +22,7 @@ final class EventsResource extends BaseClient
     public function retrieve(string $id): Event
     {
         return Event::from(
-            HttpUtils::pickResource($this->get('/events/'.rawurlencode($id)), 'event'),
+            HttpUtils::pickResource($this->get('/events/'.HttpUtils::pathId($id)), 'event'),
         );
     }
 
@@ -30,7 +30,7 @@ final class EventsResource extends BaseClient
     {
         return Event::from(
             HttpUtils::pickResource(
-                $this->post('/events/'.rawurlencode($id).'/resend', null, $options),
+                $this->post('/events/'.HttpUtils::pathId($id).'/resend', null, $options),
                 'event',
             ),
         );

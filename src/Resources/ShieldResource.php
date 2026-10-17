@@ -56,6 +56,6 @@ final class ShieldResource extends BaseClient
 
     public function removeFromBlocklist(string $id, ?RequestOptions $options = null): void
     {
-        $this->del('/shield/blocklist/'.rawurlencode($id), $options);
+        $this->del('/shield/blocklist/'.HttpUtils::pathId($id), $options);
     }
 }

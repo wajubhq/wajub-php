@@ -20,7 +20,7 @@ final class InvoicesResource extends CrudResource
     public function send(string $id, ?RequestOptions $options = null): array
     {
         return HttpUtils::pickResource(
-            $this->post('/invoices/'.rawurlencode($id).'/send', null, $options),
+            $this->post('/invoices/'.HttpUtils::pathId($id).'/send', null, $options),
             'invoice',
         );
     }
@@ -32,7 +32,7 @@ final class InvoicesResource extends CrudResource
     public function markPaid(string $id, ?array $params = null, ?RequestOptions $options = null): array
     {
         return HttpUtils::pickResource(
-            $this->post('/invoices/'.rawurlencode($id).'/mark-paid', $params, $options),
+            $this->post('/invoices/'.HttpUtils::pathId($id).'/mark-paid', $params, $options),
             'invoice',
         );
     }
@@ -41,7 +41,7 @@ final class InvoicesResource extends CrudResource
     public function cancel(string $id, ?RequestOptions $options = null): array
     {
         return HttpUtils::pickResource(
-            $this->post('/invoices/'.rawurlencode($id).'/cancel', null, $options),
+            $this->post('/invoices/'.HttpUtils::pathId($id).'/cancel', null, $options),
             'invoice',
         );
     }

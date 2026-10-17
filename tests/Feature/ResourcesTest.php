@@ -14,7 +14,9 @@ use Wajub\Resources\AccountsResource;
 use Wajub\Resources\BalanceResource;
 use Wajub\Resources\BeneficiariesResource;
 use Wajub\Resources\CrudResource;
+use Wajub\Resources\CustomersResource;
 use Wajub\Resources\DisputesResource;
+use Wajub\Resources\EventsResource;
 use Wajub\Resources\InvoicesResource;
 use Wajub\Resources\LinksResource;
 use Wajub\Resources\ListenResource;
@@ -172,12 +174,10 @@ it('sends merchant_response when accepting or closing a dispute', function (): v
     expect((string) $mock->getLastRequest()?->getBody())->toBe('');
 });
 
-it('unwraps tax reports, tax codes, listen and shield responses under their api keys', function (): void {
+it('unwraps tax reports, tax codes and shield responses under their api keys', function (): void {
     $http = mockHttpClient([
         jsonResponse(['report' => ['period' => '30d', 'total_tax' => 12.5]]),
         jsonResponse(['tax_code' => ['code' => 'txcd_1', 'name' => 'General']]),
-        jsonResponse(['realtime' => ['key' => 'k', 'channel' => 'private-team.1.sandbox']]),
-        jsonResponse(['data' => ['auth' => 'sig']]),
         jsonResponse(['blocklist' => [['id' => 'bl_1', 'type' => 'email']]]),
     ]);
 
@@ -185,12 +185,44 @@ it('unwraps tax reports, tax codes, listen and shield responses under their api 
     expect($tax->reports(['period' => '30d'])['total_tax'])->toBe(12.5)
         ->and($tax->retrieveCode('txcd_1')['name'])->toBe('General');
 
-    $listen = new ListenResource(API_KEY, BASE_URL, 'wajub', $http);
-    expect($listen->config()['channel'])->toBe('private-team.1.sandbox')
-        ->and($listen->auth(['socket_id' => '1', 'channel_name' => 'c'])['auth'])->toBe('sig');
-
     $shield = new ShieldResource(API_KEY, BASE_URL, 'wajub', $http);
     expect($shield->addToBlocklist(['type' => 'email', 'value' => 'a@b.c'])['data'][0]['id'])->toBe('bl_1');
+});
+
+it('deprecates listen config() and auth(), which the API answers 410 Gone, and still sends them as before', function (): void {
+    [$http, $mock] = mockClientWithCapture([
+        jsonResponse(['realtime' => ['key' => 'k', 'channel' => 'private-team.1.sandbox']]),
+        jsonResponse(['data' => ['auth' => 'sig']]),
+    ]);
+
+    $listen = new ListenResource(API_KEY, BASE_URL, 'wajub', $http);
+
+    // Caught here rather than left to the runner, which would report the
+    // test as deprecated although the notice is what it asserts.
+    $deprecations = [];
+    set_error_handler(function (int $level, string $message) use (&$deprecations): bool {
+        $deprecations[] = $message;
+
+        return true;
+    }, E_USER_DEPRECATED);
+
+    try {
+        expect($listen->config()['channel'])->toBe('private-team.1.sandbox')
+            ->and($mock->getLastRequest()?->getMethod())->toBe('GET')
+            ->and($mock->getLastRequest()?->getUri()->getPath())->toBe('/listen/config');
+
+        expect($listen->auth(['socket_id' => '1', 'channel_name' => 'c'])['auth'])->toBe('sig')
+            ->and($mock->getLastRequest()?->getMethod())->toBe('POST')
+            ->and($mock->getLastRequest()?->getUri()->getPath())->toBe('/listen/auth')
+            ->and(json_decode((string) $mock->getLastRequest()?->getBody(), true))->toBe(['socket_id' => '1', 'channel_name' => 'c']);
+    } finally {
+        restore_error_handler();
+    }
+
+    expect($deprecations)->toBe([
+        "Wajub: listen->config() is deprecated since 2.1.0 and the API answers it 410 Gone. To receive webhooks on your machine, forward them with the Wajub CLI's `wajub listen`.",
+        "Wajub: listen->auth() is deprecated since 2.1.0 and the API answers it 410 Gone. To receive webhooks on your machine, forward them with the Wajub CLI's `wajub listen`.",
+    ]);
 });
 
 /**
@@ -227,7 +259,7 @@ it('returns an object from create and retrieve on every resource', function (str
 it('returns an object from update on every resource that has one', function (string $resource, string $key, string $object): void {
     $http = mockHttpClient([jsonResponse([$key => ['id' => 'obj_1', 'name' => 'renamed']])]);
 
-    $updated = (new $resource(API_KEY, BASE_URL, 'wajub', $http))->update('obj_1', ['name' => 'renamed']);
+    $updated = new $resource(API_KEY, BASE_URL, 'wajub', $http)->update('obj_1', ['name' => 'renamed']);
 
     expect($updated)->toBeInstanceOf($object)
         ->and($updated->name)->toBe('renamed');
@@ -243,7 +275,7 @@ it('gives no resource of the client an object class it cannot build', function (
     $wajub = new Wajub(['api_key' => API_KEY]);
     $objectClass = new ReflectionProperty(Resource::class, 'objectClass');
 
-    foreach ((new ReflectionClass($wajub))->getProperties() as $property) {
+    foreach (new ReflectionClass($wajub)->getProperties() as $property) {
         $resource = $property->getValue($wajub);
 
         if (! $resource instanceof Resource) {
@@ -260,7 +292,58 @@ it('gives no resource of the client an object class it cannot build', function (
 it('refuses an object class it cannot build before any request is sent', function (): void {
     [$http, $mock] = mockClientWithCapture([jsonResponse(['thing' => ['id' => 'obj_1']], 201)]);
 
-    expect(fn () => new CrudResource(API_KEY, BASE_URL, 'things', 'thing', 'things', 'wajub', $http))
+    expect(fn (): CrudResource => new CrudResource(API_KEY, BASE_URL, 'things', 'thing', 'things', 'wajub', $http))
         ->toThrow(InvalidArgumentException::class, 'cannot be instantiated')
         ->and($mock->count())->toBe(1);
 });
+
+// The API decodes %2F before it matches a route, and Guzzle resolves "." and
+// ".." segments, so such an id would reach another route than the method's:
+// retrieve('pay_1/refunds') would list refunds, deleteTaxId('cus_1', '..')
+// would delete the customer.
+it('refuses an id that would reach another route, before any request is sent', function (string $resource, string $method, array $args): void {
+    [$http, $mock] = mockClientWithCapture([jsonResponse([])]);
+    $client = new $resource(API_KEY, BASE_URL, 'wajub', $http);
+
+    foreach (['pay_1/refunds', '/', '..', '.', ''] as $id) {
+        $call = fn (): mixed => $client->{$method}(...array_map(fn (mixed $arg): mixed => $arg === 'ID' ? $id : $arg, $args));
+
+        expect($call)->toThrow(InvalidArgumentException::class, 'is not a Wajub id');
+    }
+
+    expect($mock->count())->toBe(1);
+})->with([
+    'retrieve' => [TransfersResource::class, 'retrieve', ['ID']],
+    'update' => [CustomersResource::class, 'update', ['ID', ['name' => 'x']]],
+    'delete' => [CustomersResource::class, 'delete', ['ID']],
+    'accounts regenerateToken' => [AccountsResource::class, 'regenerateToken', ['ID']],
+    'events retrieve' => [EventsResource::class, 'retrieve', ['ID']],
+    'events resend' => [EventsResource::class, 'resend', ['ID']],
+    'disputes retrieve' => [DisputesResource::class, 'retrieve', ['ID']],
+    'disputes submitEvidence' => [DisputesResource::class, 'submitEvidence', ['ID', []]],
+    'disputes accept' => [DisputesResource::class, 'accept', ['ID']],
+    'disputes close' => [DisputesResource::class, 'close', ['ID']],
+    'disputes sendMessage' => [DisputesResource::class, 'sendMessage', ['ID', []]],
+    'invoices send' => [InvoicesResource::class, 'send', ['ID']],
+    'invoices markPaid' => [InvoicesResource::class, 'markPaid', ['ID']],
+    'invoices cancel' => [InvoicesResource::class, 'cancel', ['ID']],
+    'customers block' => [CustomersResource::class, 'block', ['ID']],
+    'customers unblock' => [CustomersResource::class, 'unblock', ['ID']],
+    'customers activate' => [CustomersResource::class, 'activate', ['ID']],
+    'customers deactivate' => [CustomersResource::class, 'deactivate', ['ID']],
+    'customers listTaxIds' => [CustomersResource::class, 'listTaxIds', ['ID']],
+    'customers createTaxId' => [CustomersResource::class, 'createTaxId', ['ID', []]],
+    'customers deleteTaxId customer' => [CustomersResource::class, 'deleteTaxId', ['ID', 'txi_1']],
+    'customers deleteTaxId tax id' => [CustomersResource::class, 'deleteTaxId', ['cus_1', 'ID']],
+    'payments retrieve' => [PaymentsResource::class, 'retrieve', ['ID']],
+    'payments cancel' => [PaymentsResource::class, 'cancel', ['ID']],
+    'payments process' => [PaymentsResource::class, 'process', ['ID', []]],
+    'payments processSplit' => [PaymentsResource::class, 'processSplit', ['ID', []]],
+    'payments listRefunds' => [PaymentsResource::class, 'listRefunds', ['ID']],
+    'webhookEndpoints rotateSecret' => [WebhookEndpointsResource::class, 'rotateSecret', ['ID']],
+    'shield removeFromBlocklist' => [ShieldResource::class, 'removeFromBlocklist', ['ID']],
+    'tax retrieveCode' => [TaxResource::class, 'retrieveCode', ['ID']],
+    'tax retrieveRegistration' => [TaxResource::class, 'retrieveRegistration', ['ID']],
+    'tax updateRegistration' => [TaxResource::class, 'updateRegistration', ['ID', []]],
+    'tax deleteRegistration' => [TaxResource::class, 'deleteRegistration', ['ID']],
+]);
